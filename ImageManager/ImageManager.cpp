@@ -5,9 +5,11 @@
 #endif // !_DEBUG
 
 #ifdef _DEBUG
-#define DEBUG_LOG(result,expression) Log(result,expression)
+#define DEBUG_LOG(result,expression) if (FAILED(result)){ MessageBox(nullptr, expression, L"Error", 0); return ;}
+#define DEBUG_LOG_RETURN(result,expression,value) if (FAILED(result)){MessageBox(nullptr, expression, L"Error", 0); return value;}
 #else 
-DEBUG_LOG(result,expression) 
+#define DEBUG_LOG(result,expression) 
+#define DEBUG_LOG_RETURN(result,expression,value)
 #endif // _DEBUG
 
 
@@ -80,23 +82,37 @@ void ImageManager::ImagePool::CreateImage(std::wstring filename, Image* image)
 
 void ImageManager::ImagePool::WriteImage(std::wstring filename, Image* image)
 {
+	HRESULT result;
+
 	IWICStream* stream;
 	IWICBitmapEncoder* encoder;
 	IWICBitmapFrameEncode* frame;
 
-	source->CreateStream(&stream);
+	result = source->CreateStream(&stream);
 
-	stream->InitializeFromFilename(&filename[0], GENERIC_WRITE);
+	DEBUG_LOG(result, L"Create Stream Failed For Write Image");
 
-	source->CreateEncoder(GUID_ContainerFormatPng, nullptr, &encoder);
+	result = stream->InitializeFromFilename(&filename[0], GENERIC_WRITE);
 
-	encoder->Initialize(stream, WICBitmapEncoderNoCache);
+	DEBUG_LOG(result, L"Initalize Stream Failed For Write Image");
+
+	result = source->CreateEncoder(GUID_ContainerFormatPng, nullptr, &encoder);
+
+	DEBUG_LOG(result, L"Create Encoder Failed For Write Image");
+
+	result = encoder->Initialize(stream, WICBitmapEncoderNoCache);
+
+	DEBUG_LOG(result, L"Initalize Encoder Failed For Write Image");
 
 	IPropertyBag2* pro;
 
-	encoder->CreateNewFrame(&frame,&pro);
+	result = encoder->CreateNewFrame(&frame, &pro);
 
-	frame->Initialize(pro);
+	DEBUG_LOG(result, L"Create Frame Failed For Write Image");
+
+	result = frame->Initialize(pro);
+
+	DEBUG_LOG(result, L"Initalize Frame Failed For Write Image");
 
 	frame->SetSize(image->GetWidth(), image->GetHeight());
 
@@ -108,11 +124,17 @@ void ImageManager::ImagePool::WriteImage(std::wstring filename, Image* image)
 
 	WICRect rect = { 0,0,image->GetWidth(),image->GetHeight() };
 
-	frame->WriteSource(image->source, &rect);
+	result = frame->WriteSource(image->source, &rect);
+
+	DEBUG_LOG(result, L"Write Image Failed");
 	
-	frame->Commit();
+	result = frame->Commit();
+
+	DEBUG_LOG(result, L"Commit Failed");
 	
-	encoder->Commit();
+	result = encoder->Commit();
+
+	DEBUG_LOG(result, L"Commit Failed");
 
 	release(stream);
 	release(encoder);
@@ -122,11 +144,17 @@ void ImageManager::ImagePool::WriteImage(std::wstring filename, Image* image)
 
 void ImageManager::ImagePool::CreateImageTarget(ImageTarget* target, int width, int height)
 {
-	source->CreateBitmap((UINT)width, (UINT)height, GUID_WICPixelFormat32bppPRGBA,
+	HRESULT result;
+	
+	result = source->CreateBitmap((UINT)width, (UINT)height, GUID_WICPixelFormat32bppPRGBA,
 		WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &target->source);
 
-	factory->CreateWicBitmapRenderTarget(target->source,
+	DEBUG_LOG(result, L"Create BitMap Source Failed");
+
+	result = factory->CreateWicBitmapRenderTarget(target->source,
 		D2D1::RenderTargetProperties(), &target->rendertarget);
+
+	DEBUG_LOG(result, L"Create BitMap Target Failed");
 }
 
 ImageManager::Image::Image()
@@ -168,14 +196,19 @@ int ImageManager::Image::BuffSize()
 
 BYTE * ImageManager::Image::GetPixelData()
 {
+	HRESULT result;
 
 	WICRect rect = { 0,0,GetWidth(),GetHeight() };
 
-	source->Lock(&rect, WICBitmapLockWrite, &lock);
+	result = source->Lock(&rect, WICBitmapLockWrite, &lock);
+
+	DEBUG_LOG_RETURN(result, L"Lock PixelData Failed", nullptr);
 
 	lock->GetStride(&stride);
 
-	lock->GetDataPointer(&buffsize, &pixel_source);
+	result = lock->GetDataPointer(&buffsize, &pixel_source);
+
+	DEBUG_LOG_RETURN(result, L"Get PixelData Failed", nullptr);
 
 	return pixel_source;
 }
@@ -212,9 +245,13 @@ void ImageManager::ImageTarget::Clear(D2D1::ColorF color)
 
 void ImageManager::ImageTarget::DrawImage(Image * image, float posx, float posy, float width, float height)
 {
+	HRESULT result;
+	
 	ID2D1Bitmap* bitmap = nullptr;
 
-	rendertarget->CreateBitmapFromWicBitmap(image->source, &bitmap);
+	result = rendertarget->CreateBitmapFromWicBitmap(image->source, &bitmap);
+
+	DEBUG_LOG(result, L"Create Draw Bitmap Failed");
 
 	rendertarget->DrawBitmap(bitmap, D2D1::RectF(posx, posy, posx + width, posy + height));
 
