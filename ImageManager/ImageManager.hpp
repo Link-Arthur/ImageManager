@@ -8,11 +8,6 @@
 namespace ImageManager {
 
 
-	//初始化，在程序开始的时候使用就好了。
-	static void Initialize() {
-		HRESULT result = CoInitialize(nullptr);
-	}
-
 	//图片类
 	class Image {
 	protected:

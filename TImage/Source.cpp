@@ -6,8 +6,6 @@ using namespace ImageManager;
 ImagePool* pool;
 
 int main() {
-	//初始化
-	Initialize();
 
 	//创建资源库
 	pool = new ImagePool();

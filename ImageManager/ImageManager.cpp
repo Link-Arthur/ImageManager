@@ -24,10 +24,6 @@ void release(T& Interface) {
 	Interface = nullptr;
 }
 
-void Log(HRESULT result, LPCWSTR expression) {
-	if (FAILED(result)) MessageBox(nullptr, expression, L"Error", 0);
-}
-
 ImageManager::ImagePool::ImagePool()
 {
 	HRESULT result = CoCreateInstance(CLSID_WICImagingFactory,
@@ -127,11 +123,11 @@ void ImageManager::ImagePool::WriteImage(std::wstring filename, Image* image)
 	result = frame->WriteSource(image->source, &rect);
 
 	DEBUG_LOG(result, L"Write Image Failed");
-	
+
 	result = frame->Commit();
 
 	DEBUG_LOG(result, L"Commit Failed");
-	
+
 	result = encoder->Commit();
 
 	DEBUG_LOG(result, L"Commit Failed");
