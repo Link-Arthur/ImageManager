@@ -1,6 +1,3 @@
-/*
-
-*/
 #pragma once
 
 #include<string>
@@ -10,9 +7,9 @@
 
 namespace ImageManager {
 
-	
+
 	//初始化，在程序开始的时候使用就好了。
-	static void Initalize() {
+	static void Initialize() {
 		HRESULT result = CoInitialize(nullptr);
 	}
 
@@ -53,7 +50,7 @@ namespace ImageManager {
 		void Flush();
 	};
 
-	class ImageTarget:Image {
+	class ImageTarget :Image {
 	private:
 		ID2D1RenderTarget* rendertarget;
 
@@ -61,7 +58,7 @@ namespace ImageManager {
 	public:
 		//构造函数
 		ImageTarget();
-	
+
 		//析构函数
 		~ImageTarget();
 
@@ -70,7 +67,7 @@ namespace ImageManager {
 
 		//绘制结束后使用
 		void EndDraw();
-		
+
 		//清理这个位图，用一个颜色填充
 		void Clear(D2D1::ColorF color = D2D1::ColorF::Black);
 

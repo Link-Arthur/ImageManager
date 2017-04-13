@@ -7,7 +7,7 @@ ImagePool* pool;
 
 int main() {
 	//初始化
-	Initalize();
+	Initialize();
 
 	//创建资源库
 	pool = new ImagePool();
